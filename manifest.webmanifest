@@ -1,0 +1,2 @@
+{"name":"トレカ仕入れ電卓","short_name":"仕入れ電卓","start_url":"./","scope":"./","display":"standalone","background_color":"#eef1f4","theme_color":"#2747c9","lang":"ja",
+ "icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}
