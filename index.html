@@ -264,7 +264,7 @@ details .grid>*{min-width:0}
   function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}}}
   function store(o){try{localStorage.setItem(KEY,JSON.stringify(o));return true}catch(e){return false}}
   let st=load(); st.settings=Object.assign({},DEF,st.settings||{}); st.list=st.list||[];
-  let cards=new Map(), catalog=new Map(), imgs={}, shopMeta=new Map(), selKey=null;
+  let cards=new Map(), catalog=new Map(), imgs={}, imgFiles=[], shopMeta=new Map(), selKey=null;
 
   const yen=n=>(n<0?"−":"")+"¥"+Math.abs(Math.round(n)).toLocaleString("ja-JP");
   const pct=n=>isFinite(n)?(n*100).toFixed(1)+"%":"—";
@@ -351,7 +351,7 @@ details .grid>*{min-width:0}
     $("pop10").value=c.pop10||"";$("popAll").value=c.popAll||"";
     $("rate10").value=c.popAll>0?((c.pop10||0)/c.popAll*100).toFixed(1):(c.rate10||"");
   }
-  const imgOf=k=>imgs[k]||"";
+  const imgOf=k=>{if(imgs[k])return imgs[k];const c=catalog.get(k);return (c&&c.imgId&&imgs[c.imgId])||""};
   function showSel(){
     const c=cardOf(selKey);$("sel").hidden=!c;if(!c)return;
     $("selName").textContent=c.name||"名前なし";
@@ -417,8 +417,8 @@ details .grid>*{min-width:0}
   // ===== データ読み込み（オフラインのときは前回の分） =====
   function useData(d){
     cards=new Map(Object.entries(d.cards||{}));
-    const m=new Map();(d.catalog||[]).forEach(s=>(s.cards||[]).forEach((r,i)=>m.set("cat:"+s.id+":"+i,{cat:true,name:r.n,code:r.c||"",rarity:r.r||"",setName:s.setName||"",year:s.year||"",pop10:r.p10||0,popAll:r.pa||0,popNote:s.popNote||"",psa10Usd:r.ps||0,psa10At:r.pd||"",psa10Via:r.pv||"",psaChk:(r.ps||r.pn)?1:0,snkUrl:r.u||"",buy:{}})));
-    catalog=m;
+    const m=new Map();(d.catalog||[]).forEach(s=>(s.cards||[]).forEach((r,i)=>m.set("cat:"+s.id+":"+i,{cat:true,name:r.n,code:r.c||"",rarity:r.r||"",setName:s.setName||"",year:s.year||"",pop10:r.p10||0,popAll:r.pa||0,popNote:s.popNote||"",psa10Usd:r.ps||0,psa10At:r.pd||"",psa10Via:r.pv||"",psaChk:(r.ps||r.pn)?1:0,snkUrl:r.u||"",imgId:r.i||"",buy:{}})));
+    catalog=m;imgFiles=Array.isArray(d.imgFiles)?d.imgFiles.filter(f=>/^imgs\d+\.json$/.test(f)):[];
     shopMeta=new Map();(d.shops||[]).forEach(x=>{const a=shopMeta.get(x.shop)||[];a.push({at:x.at,set:new Set(x.cks||[])});shopMeta.set(x.shop,a)});
     $("dataAt").textContent="データ "+fmtTime(d.at)+" 時点"+(Date.now()-d.at>4*864e5?"（古くなっています）":"");
     setStatus("相場リスト "+cards.size+"枚＋旧弾など "+catalog.size+"枚から探せます");
@@ -437,7 +437,7 @@ details .grid>*{min-width:0}
       if(!loadedAt)setStatus("データを読み込めませんでした。電波の良い場所で一度開いてください（一度開けば次からはオフラインでも使えます）",true);
       else if(force)toast("今は電波がないため、前回のデータを使っています");
     }
-    try{const r=await fetch("imgs.json");if(r.ok){imgs=await r.json();if(cardOf(selKey))showSel();renderHits();renderList()}}catch(e){}
+    const all={};for(const f of ["imgs.json"].concat(imgFiles)){try{const r=await fetch(f);if(r.ok){Object.assign(all,await r.json());imgs=all;if(cardOf(selKey))showSel();renderHits();renderList()}}catch(e){}}
   }
 
   // ===== イベント =====
